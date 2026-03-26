@@ -346,6 +346,162 @@
 </head>
 <body>
 
+
+
+<div id="elite-loader">
+    <canvas id="bg-canvas"></canvas>
+    <div class="meta-text top-meta">ARCHITECT_MODE // ENABLED</div>
+
+    <div class="center-wrap">
+        <h1 class="main-title">
+            <span class="char">SHOURYA</span>
+            <span class="char builds">BUILDS</span>
+        </h1>
+    </div>
+
+    <div class="progress-box">
+        <div class="big-num" id="pct">00</div>
+        <div class="bar-container">
+            <div class="bar-active" id="progress-line"></div>
+        </div>
+        <div class="meta-text bottom-meta">BUILDING_DIGITAL_EMPIRE...</div>
+    </div>
+
+    <style>
+        #elite-loader {
+            position: fixed; inset: 0; z-index: 999999;
+            background: #030303; display: flex; flex-direction: column;
+            justify-content: space-between; padding: 5vh 5vw;
+            font-family: 'Plus Jakarta Sans', sans-serif; color: #fff;
+            overflow: hidden; touch-action: none;
+        }
+        #bg-canvas { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+        .meta-text { font-size: 10px; letter-spacing: 0.4em; color: rgba(255,255,255,0.3); text-transform: uppercase; }
+        .top-meta { align-self: flex-start; }
+        .center-wrap { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 100%; pointer-events: none; }
+        .main-title { font-size: clamp(2.5rem, 10vw, 8rem); font-weight: 800; line-height: 0.9; letter-spacing: -0.04em; display: flex; justify-content: center; overflow: hidden; gap: 0.2em; }
+        .char { display: inline-block; transform: translateY(120%); filter: blur(10px); opacity: 0; }
+        .builds { color: #00ff88; }
+        .progress-box { position: absolute; bottom: 8vh; left: 5vw; display: flex; align-items: flex-end; gap: 20px; }
+        .big-num { font-size: clamp(3rem, 8vw, 5rem); font-weight: 200; line-height: 0.8; font-variant-numeric: tabular-nums; }
+        .bar-container { width: clamp(100px, 25vw, 200px); height: 2px; background: rgba(255,255,255,0.1); position: relative; margin-bottom: 8px; overflow: hidden; }
+        .bar-active { position: absolute; height: 100%; width: 0%; background: #00ff88; box-shadow: 0 0 20px #00ff88; }
+        
+        /* Main Site - Initial Hidden State */
+        #main-site { 
+            opacity: 0; 
+            visibility: hidden; 
+            transform: scale(1.1);
+            filter: blur(15px);
+        }
+
+        @media (max-width: 768px) {
+            .main-title { flex-direction: column; align-items: center; }
+            .progress-box { flex-direction: column; align-items: flex-start; gap: 5px; bottom: 5vh; }
+            .bar-container { width: 150px; }
+        }
+    </style>
+
+    <script>
+        (function() {
+            const canvas = document.getElementById('bg-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+            window.addEventListener('resize', resize); resize();
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * (window.innerWidth < 768 ? 1 : 1.5);
+                    this.vx = (Math.random() - 0.5) * 0.3;
+                    this.vy = (Math.random() - 0.5) * 0.3;
+                    this.opacity = Math.random() * 0.5 + 0.2;
+                }
+                update() {
+                    this.x += this.vx; this.y += this.vy;
+                    if(this.x < 0) this.x = canvas.width; if(this.x > canvas.width) this.x = 0;
+                    if(this.y < 0) this.y = canvas.height; if(this.y > canvas.height) this.y = 0;
+                }
+                draw() {
+                    ctx.fillStyle = `rgba(0, 255, 136, ${this.opacity})`;
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+
+            const particleCount = window.innerWidth < 768 ? 80 : 150;
+            for(let i=0; i<particleCount; i++) particles.push(new Particle());
+
+            function loop() {
+                ctx.clearRect(0,0,canvas.width, canvas.height);
+                particles.forEach(p => { p.update(); p.draw(); });
+                requestAnimationFrame(loop);
+            }
+            loop();
+
+            const runGodReveal = () => {
+                const tl = gsap.timeline();
+
+                // 1. Loader Content Entrance
+                tl.to(".char", { 
+                    y: 0, opacity: 1, filter: "blur(0px)", 
+                    duration: 1.2, stagger: 0.07, ease: "expo.out", delay: 0.3 
+                });
+
+                // 2. Counter (3 Seconds)
+                let countObj = { val: 0 };
+                tl.to(countObj, {
+                    val: 100, duration: 3, ease: "power2.inOut",
+                    onUpdate: () => {
+                        let round = Math.round(countObj.val);
+                        document.getElementById("pct").innerText = round < 10 ? "0"+round : round;
+                        document.getElementById("progress-line").style.width = round + "%";
+                    }
+                }, "<");
+
+                // 3. EXIT SEQUENCE (Implosion)
+                tl.to([".center-wrap", ".progress-box", ".top-meta"], {
+                    scale: 0.8, opacity: 0, filter: "blur(15px)", 
+                    duration: 0.8, ease: "power4.in"
+                }, "+=0.2");
+
+                tl.to("#elite-loader", {
+                    opacity: 0, scale: 1.2,
+                    duration: 1, ease: "power3.inOut"
+                }, "-=0.4");
+
+                // 4. MAIN SITE REVEAL (Tagda Smooth Entrance)
+                tl.fromTo("#main-site", 
+                    { opacity: 0, scale: 1.1, filter: "blur(20px)", visibility: "visible" }, 
+                    { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.5, ease: "expo.out" }, 
+                    "-=0.9"
+                );
+
+                // Option: Adding a slight stagger to website's first children for that 'Premium' feel
+                tl.fromTo("#main-site > *:nth-child(-n+3)", 
+                    { y: 30, opacity: 0 }, 
+                    { y: 0, opacity: 1, stagger: 0.15, duration: 1, ease: "power3.out" }, 
+                    "-=1.0"
+                );
+
+                tl.call(() => { 
+                    document.body.style.overflow = "auto";
+                    document.getElementById("elite-loader").remove(); 
+                });
+            };
+
+            if (window.gsap) { runGodReveal(); } 
+            else { window.addEventListener('load', () => { if(window.gsap) runGodReveal(); }); }
+        })();
+    </script>
+</div>
+
+<div id="main-site">
+    </div>
+
+    
+
     <div class="cursor-dot"></div>
 <div class="cursor-outline"></div>
 
